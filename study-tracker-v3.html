@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0a0a0f"/>
+<title>مرور هوشمند</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#18181f;--bg4:#1e1e28;
+  --border:#252530;--border2:#2e2e3e;
+  --text:#e8e6e0;--text2:#8a8898;--text3:#52505e;
+  --accent:#7c6ef5;--accent2:#a594f9;
+  --green:#4ade80;--yellow:#facc15;--orange:#fb923c;--red:#f87171;--blue:#60a5fa;
+  --radius:12px;--radius-sm:8px;
+}
+body.light{
+  --bg:#f0eeea;--bg2:#e8e6e0;--bg3:#dedad4;--bg4:#d4d0c8;
+  --border:#ccc8be;--border2:#b8b4aa;
+  --text:#1a1820;--text2:#6a6878;--text3:#9a98a8;
+  --accent:#5a4ed4;--accent2:#7c6ef5;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Vazirmatn',sans-serif;direction:rtl;overflow:hidden;}
+button{cursor:pointer;border:none;outline:none;font-family:inherit;background:none;}
+input,select,textarea{font-family:inherit;direction:rtl;outline:none;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* LAYOUT */
+#app{display:flex;flex-direction:column;height:100vh;}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;position:relative;z-index:10;}
+#topbar-title{font-size:16px;font-weight:700;color:var(--text);}
+#topbar-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+#content{flex:1;overflow-y:auto;padding:16px 16px 80px;}
+#navbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:20;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px;gap:3px;cursor:pointer;transition:all 0.15s;border:none;background:none;}
+.nav-icon{font-size:18px;line-height:1;}
+.nav-label{font-size:10px;color:var(--text3);transition:color 0.15s;}
+.nav-item.active .nav-label{color:var(--accent2);}
+.nav-item.active .nav-icon{filter:drop-shadow(0 0 6px var(--accent));}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:border-color 0.2s;}
+.card:hover{border-color:var(--border2);}
+.card-sm{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;}
+
+/* BADGES */
+.grade-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:18px;border-radius:5px;font-size:10px;font-weight:700;flex-shrink:0;}
+.imp-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+
+/* GRADE COLORS */
+.g-A{background:#4ade8022;border:1.5px solid #4ade80;color:#4ade80;}
+.g-Bplus{background:#a3e63522;border:1.5px solid #a3e635;color:#a3e635;}
+.g-B{background:#facc1522;border:1.5px solid #facc15;color:#facc15;}
+.g-C{background:#fb923c22;border:1.5px solid #fb923c;color:#fb923c;}
+.g-D{background:#f8717122;border:1.5px solid #f87171;color:#f87171;}
+.g-none{background:var(--bg4);border:1.5px solid var(--border2);color:var(--text3);}
+
+/* IMPORTANCE */
+.imp-low{background:#3a3a5022;color:var(--text3);border:1px solid var(--border2);}
+.imp-med{background:#60a5fa22;color:#60a5fa;border:1px solid #60a5fa44;}
+.imp-high{background:#fb923c22;color:#fb923c;border:1px solid #fb923c44;}
+.imp-critical{background:#f8717122;color:#f87171;border:1px solid #f8717144;}
+
+/* PROGRESS BAR */
+.progress-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.3s;}
+
+/* SECTION TITLE */
+.sec-title{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:10px;letter-spacing:0.5px;text-transform:uppercase;}
+
+/* FLASH */
+.flash{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#0a0a0f;padding:9px 22px;border-radius:24px;font-weight:600;font-size:13px;animation:fu 2.2s ease forwards;z-index:999;}
+@keyframes fu{0%{opacity:0;transform:translateX(-50%) translateY(8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;align-items:flex-end;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg2);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:16px;}
+.modal-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-size:14px;}
+.modal-input::placeholder{color:var(--text3);}
+.btn-primary{width:100%;background:var(--accent);color:#fff;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;}
+.btn-secondary{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:12px;border-radius:var(--radius-sm);font-size:14px;}
+.btn-danger{width:100%;background:#f8717122;border:1px solid #f87171;color:#f87171;padding:10px;border-radius:var(--radius-sm);font-size:13px;}
+
+/* SEARCH */
+.search-bar{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-size:14px;margin-bottom:14px;}
+
+/* CHART */
+canvas{max-width:100%;}
+
+/* TOPIC ITEM */
+.topic-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;}
+.topic-item:hover{border-color:var(--border2);}
+
+/* TABS */
+.tab-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+.tab-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;border:1px solid var(--border);color:var(--text2);background:none;transition:all 0.15s;}
+.tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* GRADE BUTTONS */
+.grade-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.grade-btn{padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;transition:transform 0.1s;}
+.grade-btn:active{transform:scale(0.95);}
+
+/* COLOR DOTS */
+.color-dot{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.color-dot.sel{border-color:#fff;transform:scale(1.2);}
+
+/* STAT BOX */
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;}
+.stat-num{font-size:28px;font-weight:800;line-height:1;}
+.stat-label{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* DANGER ZONE */
+.danger-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:6px;}
+
+/* NOTE TEXTAREA */
+.note-area{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;color:var(--text);font-size:13px;resize:none;min-height:70px;}
+
+@media(max-width:380px){.nav-label{font-size:9px;}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div>
+      <div id="topbar-title">مرور هوشمند</div>
+      <div id="topbar-sub"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button onclick="openSearch()" style="color:var(--text2);font-size:18px;">🔍</button>
+      <button id="theme-btn" onclick="toggleTheme()" style="font-size:18px;">☀</button>
+    </div>
+  </div>
+  <div id="content"></div>
+  <nav id="navbar">
+    <button class="nav-item active" id="nav-dashboard" onclick="goto('dashboard')">
+      <span class="nav-icon">📊</span><span class="nav-label">داشبورد</span>
+    </button>
+    <button class="nav-item" id="nav-courses" onclick="goto('courses')">
+      <span class="nav-icon">📚</span><span class="nav-label">دروس</span>
+    </button>
+    <button class="nav-item" id="nav-review" onclick="goto('review')">
+      <span class="nav-icon">🔄</span><span class="nav-label">مرور</span>
+    </button>
+    <button class="nav-item" id="nav-analytics" onclick="goto('analytics')">
+      <span class="nav-icon">📈</span><span class="nav-label">تحلیل</span>
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="goto('settings')">
+      <span class="nav-icon">⚙️</span><span class="nav-label">تنظیمات</span>
+    </button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<div class="modal-bg" id="search-bg" onclick="if(event.target===this)closeSearch()">
+  <div class="modal" id="search-content"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const SK = 'study-v3';
+const PK = 'study-v3-prefs';
+const GRADE_CFG = {
+  A:    {label:'A',   color:'#4ade80',days:10,desc:'می‌توانم آموزش دهم'},
+  Bplus:{label:'B+',  color:'#a3e635',days:7, desc:'مسلط، چند نکته جزئی'},
+  B:    {label:'B',   color:'#facc15',days:4, desc:'مفهوم را می‌دانم'},
+  C:    {label:'C',   color:'#fb923c',days:2, desc:'آشنا، جزئیات کم'},
+  D:    {label:'D',   color:'#f87171',days:1, desc:'فراموش کرده‌ام'},
+};
+const IMP_CFG = {
+  low:     {label:'کم‌اهمیت', cls:'imp-low'},
+  med:     {label:'متوسط',    cls:'imp-med'},
+  high:    {label:'مهم',      cls:'imp-high'},
+  critical:{label:'بسیار مهم',cls:'imp-critical'},
+};
+const COLORS = ['#7c6ef5','#f472b6','#34d399','#fb923c','#60a5fa','#facc15','#f87171','#2dd4bf'];
+
+function loadData(){
+  try{const r=localStorage.getItem(SK);return r?JSON.parse(r):{courses:[],chapters:[],topics:[]};}
+  catch{return{courses:[],chapters:[],topics:[]};}
+}
+function saveData(){localStorage.setItem(SK,JSON.stringify(D));}
+function loadPrefs(){try{const r=localStorage.getItem(PK);return r?JSON.parse(r):{theme:'dark'};}catch{return{theme:'dark'};}}
+function savePrefs(){localStorage.setItem(PK,JSON.stringify({theme:P.theme}));}
+
+let D = loadData();
+let P = loadPrefs();
+let currentPage = 'dashboard';
+let gradingId = null;
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().split('T')[0];}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().split('T')[0];}
+function daysDiff(d){return Math.round((new Date(d)-new Date(today()))/(864e5));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+
+function gradeScore(g){return{A:100,Bplus:85,B:65,C:40,D:10}[g]??0;}
+function topicReadiness(t){
+  if(!t.history.length)return null;
+  const last5=t.history.slice(-5);
+  return Math.round(last5.reduce((s,h)=>s+gradeScore(h.grade),0)/last5.length);
+}
+function chapterReadiness(chId){
+  const tops=D.topics.filter(t=>t.chapterId===chId&&t.history.length);
+  if(!tops.length)return null;
+  const scores=tops.map(t=>topicReadiness(t)).filter(x=>x!==null);
+  return scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+}
+function courseReadiness(cId){
+  const chs=D.chapters.filter(c=>c.courseId===cId);
+  const scores=chs.map(c=>chapterReadiness(c.id)).filter(x=>x!==null);
+  return scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+}
+function readinessColor(r){
+  if(r===null)return'var(--text3)';
+  if(r>=80)return'#4ade80';if(r>=60)return'#a3e635';
+  if(r>=40)return'#facc15';if(r>=20)return'#fb923c';return'#f87171';
+}
+function readinessGrade(r){
+  if(r===null)return'—';
+  if(r>=80)return'A';if(r>=65)return'B+';if(r>=50)return'B';if(r>=30)return'C';return'D';
+}
+function gradeBadge(g){
+  if(!g)return`<span class="grade-badge g-none">—</span>`;
+  return`<span class="grade-badge g-${g.replace('+','plus')}">${GRADE_CFG[g]?.label??g}</span>`;
+}
+function impBadge(imp){
+  if(!imp)return'';
+  const c=IMP_CFG[imp];
+  return`<span class="imp-badge ${c.cls}">${c.label}</span>`;
+}
+
+function showFlash(msg,color){
+  document.querySelectorAll('.flash').forEach(e=>e.remove());
+  const el=document.createElement('div');
+  el.className='flash';el.textContent=msg;
+  if(color)el.style.background=color;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2500);
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function applyTheme(){
+  document.body.classList.toggle('light',P.theme==='light');
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.textContent=P.theme==='dark'?'☀':'🌙';
+}
+function toggleTheme(){P.theme=P.theme==='dark'?'light':'dark';applyTheme();savePrefs();}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+const PAGE_TITLES={dashboard:'داشبورد',courses:'دروس',review:'مرور امروز',analytics:'تحلیل',settings:'تنظیمات'};
+function goto(page){
+  currentPage=page;gradingId=null;
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    b.classList.toggle('active',b.id==='nav-'+page);
+  });
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[page];
+  const due=D.topics.filter(t=>t.nextReview<=today()).length;
+  document.getElementById('topbar-sub').textContent=due>0?`${due} موضوع برای مرور`:'';
+  render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const c=document.getElementById('content');
+  if(currentPage==='dashboard')c.innerHTML=renderDashboard();
+  else if(currentPage==='courses')c.innerHTML=renderCourses();
+  else if(currentPage==='review')c.innerHTML=renderReview();
+  else if(currentPage==='analytics')c.innerHTML=renderAnalytics();
+  else if(currentPage==='settings')c.innerHTML=renderSettings();
+  afterRender();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const due=D.topics.filter(t=>t.nextReview<=today());
+  const overdue=D.topics.filter(t=>t.nextReview<today());
+  const dueToday=D.topics.filter(t=>t.nextReview===today());
+
+  // Overall readiness
+  const allScores=D.topics.filter(t=>t.history.length).map(t=>topicReadiness(t));
+  const overallR=allScores.length?Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length):null;
+
+  // Danger zone
+  const danger=getDangerTopics();
+  const illusion=getIllusionTopics();
+
+  // What to study today
+  const studyToday=due.slice(0,5);
+
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div class="stat-box">
+      <div class="stat-num" style="color:${due.length>0?'#fb923c':'#4ade80'}">${due.length}</div>
+      <div class="stat-label">باید مرور شود</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:${readinessColor(overallR)}">${overallR!==null?overallR+'%':'—'}</div>
+      <div class="stat-label">آمادگی کلی</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#f87171">${overdue.length}</div>
+      <div class="stat-label">عقب‌افتاده</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#f87171">${danger.length}</div>
+      <div class="stat-label">منطقه خطر</div>
+    </div>
+  </div>`;
+
+  // امروز چی بخونم
+  if(studyToday.length){
+    html+=`<div class="sec-title">امروز چی مرور کنم</div><div style="margin-bottom:16px;">`;
+    studyToday.forEach(t=>{
+      const course=getCourse(t);const ch=getChapter(t);
+      const diff=daysDiff(t.nextReview);
+      html+=`<div class="topic-item" onclick="openGrade('${t.id}')">
+        ${gradeBadge(t.lastGrade)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+          <div style="font-size:10px;color:var(--text3);">${course?course.name:''} ${ch?'/ '+ch.name:''}</div>
+        </div>
+        ${diff<0?`<span style="font-size:10px;color:#f87171;">${Math.abs(diff)}روز تأخیر</span>`:`<span style="font-size:10px;color:#facc15;">امروز</span>`}
+      </div>`;
+    });
+    if(due.length>5)html+=`<div style="text-align:center;font-size:12px;color:var(--text3);padding:6px 0;">و ${due.length-5} موضوع دیگر...</div>`;
+    html+=`</div>`;
+  }
+
+  // منطقه خطر
+  if(danger.length){
+    html+=`<div class="sec-title" style="color:#f87171;">⚠ منطقه خطر</div><div style="margin-bottom:16px;">`;
+    danger.slice(0,3).forEach(({t,reason})=>{
+      html+=`<div class="danger-item" style="background:#f8717112;border:1px solid #f8717133;">
+        <span style="font-size:16px;">🔴</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;">${t.name}</div>
+          <div style="font-size:10px;color:#f87171;">${reason}</div>
+        </div>
+        ${gradeBadge(t.lastGrade)}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // توهم یادگیری
+  if(illusion.length){
+    html+=`<div class="sec-title" style="color:#fb923c;">🧠 توهم یادگیری</div><div style="margin-bottom:16px;">`;
+    illusion.slice(0,3).forEach(t=>{
+      const days=daysDiff(t.nextReview);
+      html+=`<div class="danger-item" style="background:#fb923c12;border:1px solid #fb923c33;">
+        <span style="font-size:16px;">🟡</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;">${t.name}</div>
+          <div style="font-size:10px;color:#fb923c;">${Math.abs(days)} روز مرور نشده</div>
+        </div>
+        ${gradeBadge(t.lastGrade)}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // وضعیت دروس
+  if(D.courses.length){
+    html+=`<div class="sec-title">وضعیت دروس</div>`;
+    D.courses.forEach(c=>{
+      const r=courseReadiness(c.id);
+      const total=D.topics.filter(t=>{
+        const ch=D.chapters.find(ch=>ch.id===t.chapterId);
+        return ch&&ch.courseId===c.id;
+      }).length;
+      const dueC=D.topics.filter(t=>{
+        const ch=D.chapters.find(ch=>ch.id===t.chapterId);
+        return ch&&ch.courseId===c.id&&t.nextReview<=today();
+      }).length;
+      html+=`<div class="card" style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
+          <span style="font-size:14px;font-weight:600;flex:1;">${c.name}</span>
+          <span style="font-size:12px;color:${readinessColor(r)};font-weight:600;">${r!==null?r+'%':'—'}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${r??0}%;background:${readinessColor(r)};"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3);">
+          <span>${total} موضوع</span>
+          ${dueC>0?`<span style="color:#fb923c;">${dueC} برای مرور</span>`:'<span style="color:#4ade80;">به‌روز</span>'}
+        </div>
+      </div>`;
+    });
+  }
+
+  return html;
+}
+
+function getDangerTopics(){
+  const result=[];
+  D.topics.forEach(t=>{
+    if(t.lastGrade==='D'){result.push({t,reason:'آخرین نمره D'});return;}
+    if(t.history.length>=2){
+      const last2=t.history.slice(-2);
+      if(last2.every(h=>h.grade==='C')){result.push({t,reason:'دو مرور متوالی C'});return;}
+      if(t.history.length>=3){
+        const last3=t.history.slice(-3).map(h=>gradeScore(h.grade));
+        if(last3[0]>last3[1]&&last3[1]>last3[2]){result.push({t,reason:'روند نزولی'});return;}
+      }
+    }
+  });
+  return result;
+}
+
+function getIllusionTopics(){
+  return D.topics.filter(t=>{
+    if(!t.lastGrade||!['A','Bplus'].includes(t.lastGrade))return false;
+    const lastReview=t.history.length?t.history[t.history.length-1].date:null;
+    if(!lastReview)return false;
+    return daysDiff(lastReview)<-14;
+  });
+}
+
+function getCourse(t){
+  const ch=D.chapters.find(c=>c.id===t.chapterId);
+  return ch?D.courses.find(c=>c.id===ch.courseId):null;
+}
+function getChapter(t){return D.chapters.find(c=>c.id===t.chapterId);}
+
+// ── COURSES ───────────────────────────────────────────────────────────────────
+let courseView={courseId:null,chapterId:null}; // null=list, string=drill down
+
+function renderCourses(){
+  if(courseView.chapterId)return renderChapterDetail(courseView.chapterId);
+  if(courseView.courseId)return renderCourseDetail(courseView.courseId);
+  return renderCourseList();
+}
+
+function renderCourseList(){
+  let html=`<button class="btn-primary" style="margin-bottom:14px;" onclick="openAddCourse()">+ درس جدید</button>`;
+  if(!D.courses.length)return html+`<div style="text-align:center;padding:40px;color:var(--text3);">هنوز درسی اضافه نشده</div>`;
+  D.courses.forEach(c=>{
+    const chs=D.chapters.filter(ch=>ch.courseId===c.id);
+    const tops=D.topics.filter(t=>chs.some(ch=>ch.id===t.chapterId));
+    const r=courseReadiness(c.id);
+    const due=tops.filter(t=>t.nextReview<=today()).length;
+    html+=`<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="drillCourse('${c.id}')">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:600;">${c.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${chs.length} سرفصل · ${tops.length} موضوع</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:14px;font-weight:700;color:${readinessColor(r)}">${r!==null?r+'%':'—'}</div>
+          ${due>0?`<div style="font-size:10px;color:#fb923c;">${due} مرور</div>`:''}
+        </div>
+        <span style="color:var(--text3);">›</span>
+      </div>
+      <div class="progress-bar" style="margin-top:10px;"><div class="progress-fill" style="width:${r??0}%;background:${readinessColor(r)};"></div></div>
+    </div>`;
+  });
+  return html;
+}
+
+function renderCourseDetail(cId){
+  const c=D.courses.find(x=>x.id===cId);
+  if(!c)return'';
+  const chs=D.chapters.filter(ch=>ch.courseId===cId);
+  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+    <button onclick="drillCourse(null)" style="color:var(--text2);font-size:20px;">‹</button>
+    <span style="width:12px;height:12px;border-radius:50%;background:${c.color};"></span>
+    <span style="font-size:16px;font-weight:700;flex:1;">${c.name}</span>
+    <button onclick="openEditCourse('${cId}')" style="font-size:18px;">✏️</button>
+  </div>
+  <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddChapter('${cId}')">+ سرفصل جدید</button>`;
+
+  if(!chs.length)return html+`<div style="text-align:center;padding:30px;color:var(--text3);">سرفصلی اضافه نشده</div>`;
+
+  chs.forEach(ch=>{
+    const tops=D.topics.filter(t=>t.chapterId===ch.id);
+    const r=chapterReadiness(ch.id);
+    const due=tops.filter(t=>t.nextReview<=today()).length;
+    html+=`<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="drillChapter('${ch.id}')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${ch.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${tops.length} موضوع</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:13px;font-weight:700;color:${readinessColor(r)}">${r!==null?r+'%':'—'}</div>
+          ${due>0?`<div style="font-size:10px;color:#fb923c;">${due} مرور</div>`:''}
+        </div>
+        <span style="color:var(--text3);">›</span>
+      </div>
+      <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:${r??0}%;background:${readinessColor(r)};"></div></div>
+    </div>`;
+  });
+  return html;
+}
+
+function renderChapterDetail(chId){
+  const ch=D.chapters.find(x=>x.id===chId);
+  if(!ch)return'';
+  const c=D.courses.find(x=>x.id===ch.courseId);
+  const tops=D.topics.filter(t=>t.chapterId===chId);
+  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+    <button onclick="drillChapter(null)" style="color:var(--text2);font-size:20px;">‹</button>
+    <div style="flex:1;">
+      <div style="font-size:15px;font-weight:700;">${ch.name}</div>
+      <div style="font-size:11px;color:var(--text3);">${c?c.name:''}</div>
+    </div>
+    <button onclick="openEditChapter('${chId}')" style="font-size:18px;">✏️</button>
+  </div>
+  <button class="btn-primary" style="margin-bottom:14px;" onclick="openAddTopic('${chId}')">+ موضوع جدید</button>`;
+
+  if(!tops.length)return html+`<div style="text-align:center;padding:30px;color:var(--text3);">موضوعی اضافه نشده</div>`;
+
+  tops.forEach(t=>{
+    const r=topicReadiness(t);
+    const diff=daysDiff(t.nextReview);
+    const lastR=t.history.length?t.history[t.history.length-1].date:'—';
+    const last5=t.history.slice(-5).map(h=>gradeBadge(h.grade)).join(' ');
+    html+=`<div class="card" style="margin-bottom:8px;" id="topic-${t.id}">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        ${gradeBadge(t.lastGrade)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:500;">${t.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;">
+            ${t.importance?impBadge(t.importance):''}
+            <span style="font-size:10px;color:var(--text3);">آخرین: ${lastR==='—'?'—':lastR}</span>
+            <span style="font-size:10px;color:${diff<=0?'#fb923c':'var(--text3)'};">بعدی: ${diff===0?'امروز':diff<0?Math.abs(diff)+' روز تأخیر':diff+' روز دیگر'}</span>
+          </div>
+          ${last5?`<div style="margin-top:6px;display:flex;gap:4px;">${last5}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          ${r!==null?`<span style="font-size:12px;font-weight:700;color:${readinessColor(r)};">${r}%</span>`:''}
+          <button onclick="openTopicMenu('${t.id}')" style="font-size:16px;color:var(--text3);">⋮</button>
+        </div>
+      </div>
+      ${gradingId===t.id?`<div class="grade-row" id="grade-row-${t.id}">
+        ${Object.entries(GRADE_CFG).map(([g,c])=>`<button class="grade-btn g-${g.replace('+','plus')}" onclick="applyGrade('${t.id}','${g}')" style="background:${c.color}18;border:1.5px solid ${c.color};color:${c.color};">${c.label}</button>`).join('')}
+        <button onclick="gradingId=null;render()" style="font-size:12px;color:var(--text3);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">لغو</button>
+      </div>`:''}
+    </div>`;
+  });
+  return html;
+}
+
+function drillCourse(id){courseView.courseId=id;courseView.chapterId=null;render();}
+function drillChapter(id){courseView.chapterId=id;render();}
+
+// ── REVIEW ────────────────────────────────────────────────────────────────────
+let reviewFilter='all';
+function renderReview(){
+  const due=D.topics.filter(t=>t.nextReview<=today());
+  const byCourse={};
+  due.forEach(t=>{
+    const ch=getChapter(t);const c=ch?D.courses.find(x=>x.id===ch.courseId):null;
+    const key=c?c.id:'other';
+    if(!byCourse[key])byCourse[key]={course:c,topics:[]};
+    byCourse[key].topics.push(t);
+  });
+
+  const courseIds=Object.keys(byCourse);
+  let html=``;
+
+  if(!due.length)return`<div style="text-align:center;padding:60px 20px;">
+    <div style="font-size:48px;margin-bottom:12px;">✓</div>
+    <div style="font-size:16px;font-weight:600;color:var(--green);">برای امروز تمومه!</div>
+    <div style="font-size:13px;color:var(--text3);margin-top:6px;">${D.topics.filter(t=>t.nextReview>today()).length} موضوع در پیش‌رو</div>
+  </div>`;
+
+  // Tab bar by course
+  html+=`<div class="tab-bar">
+    <button class="tab-btn ${reviewFilter==='all'?'active':''}" onclick="reviewFilter='all';render()">همه (${due.length})</button>
+    ${courseIds.map(k=>{
+      const c=byCourse[k].course;
+      return`<button class="tab-btn ${reviewFilter===k?'active':''}" onclick="reviewFilter='${k}';render()">${c?c.name:'سایر'} (${byCourse[k].topics.length})</button>`;
+    }).join('')}
+  </div>`;
+
+  const filtered=reviewFilter==='all'?due:(byCourse[reviewFilter]?.topics??[]);
+
+  filtered.forEach(t=>{
+    const ch=getChapter(t);const c=getCourse(t);
+    const last5=t.history.slice(-5);
+    const r=topicReadiness(t);
+    const diff=daysDiff(t.nextReview);
+    html+=`<div class="card" style="margin-bottom:10px;" id="rtopic-${t.id}">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+        ${gradeBadge(t.lastGrade)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:500;">${t.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${c?c.name:''} ${ch?'/ '+ch.name:''}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center;">
+            ${last5.map(h=>gradeBadge(h.grade)).join('')}
+            ${r!==null?`<span style="font-size:11px;font-weight:600;color:${readinessColor(r)};margin-right:4px;">${r}%</span>`:''}
+            ${t.importance?impBadge(t.importance):''}
+          </div>
+        </div>
+        ${diff<0?`<span style="font-size:10px;color:#f87171;flex-shrink:0;">${Math.abs(diff)}روز تأخیر</span>`:''}
+      </div>
+
+      <!-- Note -->
+      <textarea class="note-area" placeholder="یادداشت..." onchange="saveNote('${t.id}',this.value)">${t.note??''}</textarea>
+
+      ${gradingId===t.id?`<div class="grade-row" style="margin-top:8px;">
+        ${Object.entries(GRADE_CFG).map(([g,cfg])=>`<button class="grade-btn" onclick="applyGrade('${t.id}','${g}')" style="background:${cfg.color}18;border:1.5px solid ${cfg.color};color:${cfg.color};">${cfg.label}</button>`).join('')}
+        <button onclick="gradingId=null;render()" style="font-size:12px;color:var(--text3);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">لغو</button>
+      </div>`:`<button onclick="openGrade('${t.id}')" style="margin-top:8px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;">ثبت نمره</button>`}
+    </div>`;
+  });
+  return html;
+}
+
+function saveNote(id,val){
+  D.topics=D.topics.map(t=>t.id===id?{...t,note:val}:t);
+  saveData();
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+function renderAnalytics(){
+  const total=D.topics.length;
+  const reviewed=D.topics.filter(t=>t.history.length).length;
+  const danger=getDangerTopics().length;
+  const illusion=getIllusionTopics().length;
+
+  // Grade distribution
+  const gradeDist={A:0,Bplus:0,B:0,C:0,D:0,none:0};
+  D.topics.forEach(t=>{
+    if(t.lastGrade&&gradeDist[t.lastGrade]!==undefined)gradeDist[t.lastGrade]++;
+    else gradeDist.none++;
+  });
+
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">کل موضوع</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#4ade80;">${reviewed}</div><div class="stat-label">مرور شده</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#f87171;">${danger}</div><div class="stat-label">خطر</div></div>
+  </div>`;
+
+  // Distribution
+  html+=`<div class="sec-title">توزیع نمرات</div><div class="card" style="margin-bottom:16px;">`;
+  Object.entries(gradeDist).forEach(([g,count])=>{
+    if(!count)return;
+    const pct=total?Math.round(count/total*100):0;
+    const color=g==='none'?'var(--text3)':(GRADE_CFG[g]?.color??'var(--text3)');
+    html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="width:28px;font-size:11px;font-weight:700;color:${color};">${g==='none'?'—':(GRADE_CFG[g]?.label??g)}</span>
+      <div class="progress-bar" style="flex:1;"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+      <span style="font-size:12px;color:var(--text3);width:40px;text-align:left;">${count} (${pct}%)</span>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Course readiness
+  html+=`<div class="sec-title">آمادگی هر درس</div>`;
+  D.courses.forEach(c=>{
+    const r=courseReadiness(c.id);
+    const chs=D.chapters.filter(ch=>ch.courseId===c.id);
+    html+=`<div class="card" style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${c.color};"></span>
+        <span style="font-size:14px;font-weight:600;flex:1;">${c.name}</span>
+        <span style="font-size:14px;font-weight:700;color:${readinessColor(r)}">${r!==null?r+'%':'—'}</span>
+      </div>
+      <div class="progress-bar" style="margin-bottom:10px;"><div class="progress-fill" style="width:${r??0}%;background:${readinessColor(r)};"></div></div>
+      ${chs.map(ch=>{
+        const cr=chapterReadiness(ch.id);
+        return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;padding-right:10px;">
+          <span style="font-size:12px;flex:1;color:var(--text2);">${ch.name}</span>
+          <span style="font-size:11px;font-weight:600;color:${readinessColor(cr)}">${cr!==null?cr+'%':'—'}</span>
+          <div class="progress-bar" style="width:80px;"><div class="progress-fill" style="width:${cr??0}%;background:${readinessColor(cr)};"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  // Danger & Illusion
+  const dItems=getDangerTopics();
+  const iItems=getIllusionTopics();
+  if(dItems.length){
+    html+=`<div class="sec-title" style="color:#f87171;margin-top:8px;">⚠ منطقه خطر (${dItems.length})</div>`;
+    dItems.forEach(({t,reason})=>{
+      html+=`<div class="danger-item" style="background:#f8717112;border:1px solid #f8717133;margin-bottom:6px;">
+        ${gradeBadge(t.lastGrade)}
+        <div style="flex:1;"><div style="font-size:13px;">${t.name}</div><div style="font-size:10px;color:#f87171;">${reason}</div></div>
+      </div>`;
+    });
+  }
+  if(iItems.length){
+    html+=`<div class="sec-title" style="color:#fb923c;margin-top:8px;">🧠 توهم یادگیری (${iItems.length})</div>`;
+    iItems.forEach(t=>{
+      const days=Math.abs(daysDiff(t.history[t.history.length-1]?.date));
+      html+=`<div class="danger-item" style="background:#fb923c12;border:1px solid #fb923c33;margin-bottom:6px;">
+        ${gradeBadge(t.lastGrade)}
+        <div style="flex:1;"><div style="font-size:13px;">${t.name}</div><div style="font-size:10px;color:#fb923c;">${days} روز بدون مرور</div></div>
+      </div>`;
+    });
+  }
+
+  return html;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings(){
+  const isDark=P.theme==='dark';
+  return`<div>
+    <div class="sec-title">ظاهر</div>
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:14px;">تم تاریک</span>
+        <button onclick="toggleTheme()" style="width:44px;height:26px;border-radius:13px;background:${isDark?'var(--accent)':'var(--bg4)'};position:relative;transition:background 0.2s;border:1px solid var(--border);">
+          <span style="position:absolute;top:3px;${isDark?'right:3px':'left:3px'};width:18px;height:18px;border-radius:50%;background:#fff;transition:all 0.2s;"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sec-title">داده‌ها</div>
+    <div class="card" style="margin-bottom:8px;">
+      <button onclick="exportData('json')" style="width:100%;text-align:right;padding:10px 0;font-size:14px;color:var(--text);border-bottom:1px solid var(--border);">↓ خروجی JSON</button>
+      <button onclick="exportData('txt')" style="width:100%;text-align:right;padding:10px 0;font-size:14px;color:var(--text);border-bottom:1px solid var(--border);">↓ خروجی TXT</button>
+      <label style="width:100%;display:block;padding:10px 0;font-size:14px;color:var(--text);cursor:pointer;">↑ ورودی فایل<input type="file" accept=".json,.txt,text/plain,application/json" onchange="importData(event)" style="display:none"/></label>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="sec-title">راهنمای نمره‌دهی</div>
+      <div class="card">
+        ${Object.entries(GRADE_CFG).map(([g,c])=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          ${gradeBadge(g)}
+          <span style="font-size:13px;color:var(--text2);">${c.desc}</span>
+          <span style="margin-right:auto;font-size:11px;color:var(--text3);">${c.days} روز</span>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="sec-title">راهنمای اهمیت</div>
+      <div class="card">
+        ${Object.entries(IMP_CFG).map(([k,v])=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${impBadge(k)}</div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────────────────────
+function exportData(fmt){
+  const json=JSON.stringify(D,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`study-tracker-${today()}.${fmt}`;a.click();
+  URL.revokeObjectURL(url);
+  showFlash('فایل ذخیره شد');
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const p=JSON.parse(ev.target.result);
+      if(p.courses&&p.topics){D=p;saveData();render();showFlash('داده‌ها بارگذاری شدن');}
+      else showFlash('فایل معتبر نیست','#f87171');
+    }catch{showFlash('خطا در خواندن','#f87171');}
+  };
+  r.readAsText(f);e.target.value='';
+}
+
+// ── GRADE ─────────────────────────────────────────────────────────────────────
+function openGrade(id){gradingId=id;render();}
+function applyGrade(id,grade){
+  const cfg=GRADE_CFG[grade];
+  D.topics=D.topics.map(t=>t.id!==id?t:{
+    ...t,lastGrade:grade,
+    nextReview:addDays(today(),cfg.days),
+    history:[...t.history,{date:today(),grade}],
+  });
+  gradingId=null;saveData();render();showFlash('نمره ثبت شد','#4ade80');
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openModal(html){
+  document.getElementById('modal-content').innerHTML=html;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+
+function openSearch(){
+  const html=`<div class="modal-title">جستجو</div>
+    <input class="search-bar" placeholder="نام موضوع..." id="s-query" oninput="doSearch()" autofocus/>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+      <select id="s-course" class="modal-input" style="flex:1;" onchange="doSearch()">
+        <option value="">همه دروس</option>
+        ${D.courses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+      </select>
+      <select id="s-grade" class="modal-input" style="flex:1;" onchange="doSearch()">
+        <option value="">همه نمرات</option>
+        ${Object.entries(GRADE_CFG).map(([g,c])=>`<option value="${g}">${c.label}</option>`).join('')}
+      </select>
+      <select id="s-imp" class="modal-input" style="flex:1;" onchange="doSearch()">
+        <option value="">همه اهمیت</option>
+        ${Object.entries(IMP_CFG).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}
+      </select>
+    </div>
+    <div id="s-results"></div>`;
+  document.getElementById('search-content').innerHTML=html;
+  document.getElementById('search-bg').classList.add('open');
+}
+function closeSearch(){document.getElementById('search-bg').classList.remove('open');}
+function doSearch(){
+  const q=document.getElementById('s-query').value.toLowerCase();
+  const cId=document.getElementById('s-course').value;
+  const grade=document.getElementById('s-grade').value;
+  const imp=document.getElementById('s-imp').value;
+  let results=D.topics.filter(t=>{
+    if(q&&!t.name.toLowerCase().includes(q))return false;
+    if(grade&&t.lastGrade!==grade)return false;
+    if(imp&&t.importance!==imp)return false;
+    if(cId){const ch=getChapter(t);const c=ch?getCourse(t):null;if(!c||c.id!==cId)return false;}
+    return true;
+  });
+  const el=document.getElementById('s-results');
+  if(!el)return;
+  el.innerHTML=results.slice(0,20).map(t=>{
+    const c=getCourse(t);const ch=getChapter(t);
+    return`<div class="topic-item">
+      ${gradeBadge(t.lastGrade)}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;">${t.name}</div>
+        <div style="font-size:10px;color:var(--text3);">${c?c.name:''} ${ch?'/ '+ch.name:''}</div>
+      </div>
+      ${t.importance?impBadge(t.importance):''}
+    </div>`;
+  }).join('')||`<div style="text-align:center;padding:20px;color:var(--text3);">نتیجه‌ای یافت نشد</div>`;
+}
+
+// ── ADD COURSE ────────────────────────────────────────────────────────────────
+let selColor=COLORS[0];
+function openAddCourse(){
+  const dots=COLORS.map(c=>`<button class="color-dot ${c===selColor?'sel':''}" style="background:${c};" onclick="selColor='${c}';openAddCourse();"></button>`).join('');
+  openModal(`<div class="modal-title">درس جدید</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="new-course-name" placeholder="نام درس..." onkeydown="if(event.key==='Enter')submitAddCourse()"/>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">${dots}</div>
+      <button class="btn-primary" onclick="submitAddCourse()">ثبت</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('new-course-name')?.focus(),100);
+}
+function submitAddCourse(){
+  const name=document.getElementById('new-course-name')?.value.trim();
+  if(!name)return;
+  D.courses.push({id:uid(),name,color:selColor});
+  saveData();closeModal();render();showFlash('درس اضافه شد');
+}
+function openEditCourse(id){
+  const c=D.courses.find(x=>x.id===id);if(!c)return;
+  openModal(`<div class="modal-title">ویرایش درس</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="edit-course-name" value="${c.name}"/>
+      <button class="btn-primary" onclick="submitEditCourse('${id}')">ذخیره</button>
+      <button class="btn-danger" onclick="deleteCourse('${id}')">حذف درس</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+}
+function submitEditCourse(id){
+  const name=document.getElementById('edit-course-name')?.value.trim();
+  if(!name)return;
+  D.courses=D.courses.map(c=>c.id===id?{...c,name}:c);
+  saveData();closeModal();render();
+}
+function deleteCourse(id){
+  const chs=D.chapters.filter(c=>c.courseId===id).map(c=>c.id);
+  D.courses=D.courses.filter(c=>c.id!==id);
+  D.chapters=D.chapters.filter(c=>c.courseId!==id);
+  D.topics=D.topics.filter(t=>!chs.includes(t.chapterId));
+  saveData();closeModal();drillCourse(null);showFlash('درس حذف شد','#f87171');
+}
+
+// ── ADD CHAPTER ───────────────────────────────────────────────────────────────
+function openAddChapter(courseId){
+  openModal(`<div class="modal-title">سرفصل جدید</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="new-ch-name" placeholder="نام سرفصل..." onkeydown="if(event.key==='Enter')submitAddChapter('${courseId}')"/>
+      <button class="btn-primary" onclick="submitAddChapter('${courseId}')">ثبت</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('new-ch-name')?.focus(),100);
+}
+function submitAddChapter(courseId){
+  const name=document.getElementById('new-ch-name')?.value.trim();
+  if(!name)return;
+  D.chapters.push({id:uid(),name,courseId});
+  saveData();closeModal();render();showFlash('سرفصل اضافه شد');
+}
+function openEditChapter(id){
+  const ch=D.chapters.find(x=>x.id===id);if(!ch)return;
+  openModal(`<div class="modal-title">ویرایش سرفصل</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="edit-ch-name" value="${ch.name}"/>
+      <button class="btn-primary" onclick="submitEditChapter('${id}')">ذخیره</button>
+      <button class="btn-danger" onclick="deleteChapter('${id}')">حذف سرفصل</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+}
+function submitEditChapter(id){
+  const name=document.getElementById('edit-ch-name')?.value.trim();
+  if(!name)return;
+  D.chapters=D.chapters.map(c=>c.id===id?{...c,name}:c);
+  saveData();closeModal();render();
+}
+function deleteChapter(id){
+  D.chapters=D.chapters.filter(c=>c.id!==id);
+  D.topics=D.topics.filter(t=>t.chapterId!==id);
+  saveData();closeModal();render();showFlash('سرفصل حذف شد','#f87171');
+}
+
+// ── ADD TOPIC ─────────────────────────────────────────────────────────────────
+function openAddTopic(chapterId){
+  const impOpts=Object.entries(IMP_CFG).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  openModal(`<div class="modal-title">موضوع جدید</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="new-topic-name" placeholder="نام موضوع..." onkeydown="if(event.key==='Enter')submitAddTopic('${chapterId}')"/>
+      <select class="modal-input" id="new-topic-imp">
+        <option value="">درجه اهمیت (اختیاری)</option>
+        ${impOpts}
+      </select>
+      <button class="btn-primary" onclick="submitAddTopic('${chapterId}')">ثبت</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('new-topic-name')?.focus(),100);
+}
+function submitAddTopic(chapterId){
+  const name=document.getElementById('new-topic-name')?.value.trim();
+  const imp=document.getElementById('new-topic-imp')?.value||null;
+  if(!name)return;
+  D.topics.push({id:uid(),name,chapterId,importance:imp,lastGrade:null,nextReview:today(),history:[],note:''});
+  saveData();closeModal();render();showFlash('موضوع اضافه شد');
+}
+
+function openTopicMenu(id){
+  const t=D.topics.find(x=>x.id===id);if(!t)return;
+  const impOpts=Object.entries(IMP_CFG).map(([k,v])=>`<option value="${k}" ${t.importance===k?'selected':''}>${v.label}</option>`).join('');
+  openModal(`<div class="modal-title">ویرایش موضوع</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input class="modal-input" id="edit-topic-name" value="${t.name}"/>
+      <select class="modal-input" id="edit-topic-imp">
+        <option value="">بدون اهمیت</option>${impOpts}
+      </select>
+      <button class="btn-primary" onclick="submitEditTopic('${id}')">ذخیره</button>
+      <button onclick="openGrade('${id}');closeModal()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border-radius:var(--radius-sm);font-size:14px;font-weight:600;">ثبت نمره</button>
+      <button class="btn-danger" onclick="deleteTopic('${id}')">حذف موضوع</button>
+      <button class="btn-secondary" onclick="closeModal()">لغو</button>
+    </div>`);
+}
+function submitEditTopic(id){
+  const name=document.getElementById('edit-topic-name')?.value.trim();
+  const imp=document.getElementById('edit-topic-imp')?.value||null;
+  if(!name)return;
+  D.topics=D.topics.map(t=>t.id===id?{...t,name,importance:imp}:t);
+  saveData();closeModal();render();
+}
+function deleteTopic(id){
+  D.topics=D.topics.filter(t=>t.id!==id);
+  saveData();closeModal();render();showFlash('موضوع حذف شد','#f87171');
+}
+
+// ── AFTER RENDER ──────────────────────────────────────────────────────────────
+function afterRender(){}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Migrate old data if needed
+if(!D.chapters)D.chapters=[];
+
+applyTheme();
+goto('dashboard');
+</script>
+</body>
+</html>
